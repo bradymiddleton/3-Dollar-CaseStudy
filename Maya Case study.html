@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The $3 Pivot — Power of Micro-Investment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #16161f;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #f0c040;
+    --accent2: #e07830;
+    --accent3: #50d8a0;
+    --text: #e8e8f0;
+    --text2: #9898b0;
+    --text3: #5a5a70;
+    --red: #e05060;
+    --blue: #5080f0;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '$3';
+    position: absolute;
+    font-family: var(--font-display);
+    font-size: 38vw;
+    font-weight: 900;
+    color: rgba(240,192,64,0.03);
+    right: -5vw;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  .nav-tag {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 3px 10px;
+    font-weight: 500;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 900px;
+    padding: 4rem 0 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--text2);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent3);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .scroll-hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* SECTIONS */
+  .section {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  h2 em { font-style: italic; color: var(--accent); }
+
+  .section-intro {
+    color: var(--text2);
+    max-width: 640px;
+    margin-bottom: 3rem;
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  /* PERSONA CARD */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  @media (max-width: 768px) { .persona-grid { grid-template-columns: 1fr; } }
+
+  .persona-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .persona-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .persona-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--bg);
+    margin-bottom: 1rem;
+  }
+
+  .persona-name {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .persona-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+
+  .persona-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .fact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .fact-key { color: var(--text3); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .fact-val { color: var(--text); font-weight: 500; }
+
+  .pivot-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pivot-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .pivot-item:hover { border-color: var(--accent); }
+
+  .pivot-icon {
+    font-size: 1.4rem;
+  }
+
+  .pivot-name { font-weight: 500; }
+  .pivot-desc { font-size: 0.8rem; color: var(--text2); }
+
+  .pivot-cost {
+    font-family: var(--font-mono);
+    color: var(--red);
+    text-decoration: line-through;
+    font-size: 0.9rem;
+  }
+
+  .pivot-save {
+    font-family: var(--font-mono);
+    color: var(--accent3);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* CHART AREA */
+  .chart-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .chart-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .chart-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  #mainChart { width: 100%; height: 420px; }
+
+  .legend {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 0.75rem 1rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    min-width: 180px;
+    z-index: 100;
+  }
+
+  .tooltip-year {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3px;
+  }
+
+  .tooltip-label { color: var(--text2); }
+  .tooltip-val { font-weight: 500; }
+
+  /* MILESTONE CARDS */
+  .milestones {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  @media (max-width: 768px) { .milestones { grid-template-columns: 1fr; } }
+
+  .milestone-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+
+  .milestone-card.visible { opacity: 1; transform: translateY(0); }
+
+  .milestone-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .milestone-card.y10::after { background: var(--blue); }
+  .milestone-card.y20::after { background: var(--accent2); }
+  .milestone-card.y30::after { background: var(--accent3); }
+
+  .milestone-year {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .milestone-card.y10 .milestone-year { color: var(--blue); }
+  .milestone-card.y20 .milestone-year { color: var(--accent2); }
+  .milestone-card.y30 .milestone-year { color: var(--accent3); }
+
+  .milestone-amount {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .milestone-gain {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent3);
+    margin-bottom: 1rem;
+  }
+
+  .milestone-desc {
+    font-size: 0.85rem;
+    color: var(--text2);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  /* OPTIONS SECTION */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .option-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+    cursor: default;
+  }
+
+  .option-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+  }
+
+  .option-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .option-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .option-threshold {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .option-desc {
+    font-size: 0.875rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  .option-return {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(80,216,160,0.08);
+    border-left: 2px solid var(--accent3);
+    font-size: 0.82rem;
+    color: var(--accent3);
+    font-family: var(--font-mono);
+  }
+
+  /* HISTORICAL SECTION */
+  .historical-chart { width: 100%; height: 340px; }
+
+  .era-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .era-item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg3);
+    border-left: 3px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .era-item:hover { border-left-color: var(--accent); }
+
+  .era-period {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+
+  .era-event { font-size: 0.85rem; color: var(--text2); }
+
+  .era-return {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* SYSTEMIC SECTION */
+  .gap-chart { width: 100%; height: 320px; }
+
+  .quote-block {
+    border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem;
+    background: var(--bg3);
+    margin: 2rem 0;
+  }
+
+  .quote-text {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-style: italic;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  .quote-attr {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 768px) { footer { grid-template-columns: 1fr; } }
+
+  .footer-note {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    line-height: 1.8;
+  }
+
+  .footer-note strong { color: var(--text2); }
+
+  /* ANIMATED COUNTER */
+  .counter { display: inline; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 2rem;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* Fade in on scroll */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <nav class="nav">
+    <span class="nav-tag">Visualization Project</span>
+    <span>Micro-Investment · Compounding · Financial Optionality</span>
+    <span>S&P 500 / Index Fund Model · 7% Real Return</span>
+  </nav>
+
+  <div class="hero-content">
+    <div class="eyebrow">The Power of the Pivot</div>
+    <h1>What if <em>$3 a day</em><br>changed everything?</h1>
+    <p class="hero-sub">
+      A small, consistent redirection of daily spending — roughly the cost of a branded coffee or the grocery-brand premium — compounds into transformative wealth over time. This is the story of Maya, age 22, and the trajectory she chose.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">$21</span>
+        <span class="stat-label">per week invested</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">$1,092</span>
+        <span class="stat-label">per year</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="heroFinal">$119,380</span>
+        <span class="stat-label">at 30 years (7% real return)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">↓ scroll to explore</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERSONA -->
+<section class="section fade-in">
+  <div class="section-label">01 — The Case Study</div>
+  <h2>Meet <em>Maya</em></h2>
+  <p class="section-intro">
+    Maya is 22. She earns $38,000/year as a marketing coordinator in a mid-size city. She has no trust fund, no inheritance, and $4,200 in student debt. She also has a $3-a-day habit — a premium coffee on weekdays and name-brand grocery staples on weekends. This is her pivot.
+  </p>
+
+  <div class="persona-grid">
+    <div class="persona-card">
+      <div class="persona-avatar">M</div>
+      <div class="persona-name">Maya Chen</div>
+      <div class="persona-title">Fictional Persona · Data-Driven</div>
+      <div class="persona-facts">
+        <div class="fact-row"><span class="fact-key">Age</span><span class="fact-val">22</span></div>
+        <div class="fact-row"><span class="fact-key">Income</span><span class="fact-val">$38,000 / yr</span></div>
+        <div class="fact-row"><span class="fact-key">Savings</span><span class="fact-val">$420</span></div>
+        <div class="fact-row"><span class="fact-key">Debt</span><span class="fact-val">$4,200 student loan</span></div>
+        <div class="fact-row"><span class="fact-key">Investments</span><span class="fact-val">$0</span></div>
+        <div class="fact-row"><span class="fact-key">Daily pivot</span><span class="fact-val">$3.00</span></div>
+        <div class="fact-row"><span class="fact-key">Vehicle</span><span class="fact-val">S&P 500 Index Fund</span></div>
+        <div class="fact-row"><span class="fact-key">Assumed return</span><span class="fact-val">7% real (inflation-adj.)</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="pivot-list">
+        <div class="pivot-item">
+          <div class="pivot-icon">☕</div>
+          <div>
+            <div class="pivot-name">Daily Retail Coffee → Home Brew</div>
+            <div class="pivot-desc">Weekday Starbucks (~$5.50) replaced with home brew (~$0.60)</div>
+          </div>
+          <div class="pivot-cost">$5.50</div>
+          <div class="pivot-save">saves ~$1.80/day</div>
+        </div>
+        <div class="pivot-item">
+          <div class="pivot-icon">🛒</div>
+          <div>
+            <div class="pivot-name">Name-Brand Groceries → Generic</div>
+            <div class="pivot-desc">Store-brand pantry staples (cereal, pasta, canned goods)</div>
+          </div>
+          <div class="pivot-cost">+$0.90/day</div>
+          <div class="pivot-save">saves ~$0.90/day</div>
+        </div>
+        <div class="pivot-item">
+          <div class="pivot-icon">🥤</div>
+          <div>
+            <div class="pivot-name">Bottled Water → Filtered Tap</div>
+            <div class="pivot-desc">BPA-free pitcher replaces daily bottled purchases</div>
+          </div>
+          <div class="pivot-cost">+$0.30/day</div>
+          <div class="pivot-save">saves ~$0.30/day</div>
+        </div>
+        <div class="pivot-item" style="border-top:2px solid var(--accent); margin-top:0.5rem;">
+          <div class="pivot-icon">📈</div>
+          <div>
+            <div class="pivot-name" style="color:var(--accent)">Total Daily Redirection</div>
+            <div class="pivot-desc">Invested weekly into a low-cost index fund (e.g., FXAIX, VOO)</div>
+          </div>
+          <div class="pivot-cost"></div>
+          <div class="pivot-save" style="font-size:1.1rem;">$3.00 / day</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MAIN GROWTH CHART -->
+<section class="section fade-in">
+  <div class="section-label">02 — Compound Growth</div>
+  <h2>The <em>Trajectory</em></h2>
+  <p class="section-intro">
+    $21/week invested at a historically conservative 7% real annual return (S&P 500 inflation-adjusted average). Toggle between scenarios to explore the impact of return rates and compare against the "no-invest" baseline.
+  </p>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">Portfolio Growth Over 30 Years</div>
+      <div class="chart-controls">
+        <button class="btn active" onclick="setRate(0.07, this)">7% Real</button>
+        <button class="btn" onclick="setRate(0.10, this)">10% Nominal</button>
+        <button class="btn" onclick="setRate(0.05, this)">5% Conservative</button>
+      </div>
+    </div>
+    <svg id="mainChart"></svg>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Portfolio Value</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--text3)"></div>Total Contributed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Investment Gains</div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <div class="milestones">
+    <div class="milestone-card y10 fade-in" id="m10">
+      <div class="milestone-year">Year 10 · Maya, Age 32</div>
+      <div class="milestone-amount" id="v10">$19,004</div>
+      <div class="milestone-gain" id="g10">+$8,096 in gains</div>
+      <div class="milestone-desc">
+        Enough for a <strong>3% down payment</strong> on a $180k starter home, a <strong>fully-funded emergency reserve</strong>, or the seed capital to open a <strong>Roth IRA and IUL policy</strong> simultaneously.
+      </div>
+    </div>
+    <div class="milestone-card y20 fade-in" id="m20">
+      <div class="milestone-year">Year 20 · Maya, Age 42</div>
+      <div class="milestone-amount" id="v20">$55,036</div>
+      <div class="milestone-gain" id="g20">+$33,196 in gains</div>
+      <div class="milestone-desc">
+        Qualifies as a <strong>20% down payment</strong> on a $275k investment property, collateral for a <strong>business line of credit</strong>, or a head-start <strong>529 college fund</strong> for a child born today.
+      </div>
+    </div>
+    <div class="milestone-card y30 fade-in" id="m30">
+      <div class="milestone-year">Year 30 · Maya, Age 52</div>
+      <div class="milestone-amount" id="v30">$119,380</div>
+      <div class="milestone-gain" id="g30">+$86,540 in gains</div>
+      <div class="milestone-desc">
+        Near <strong>$120k in liquid wealth</strong>. Enough for a <strong>paid-off rental property</strong> in many markets, bridge capital to retire a decade early, or a <strong>generational endowment</strong> for children.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HISTORICAL CONTEXT -->
+<section class="section fade-in">
+  <div class="section-label">03 — Historical Context</div>
+  <h2>Markets reward <em>patience</em></h2>
+  <p class="section-intro">
+    The 7% real return assumption isn't optimism — it's history. S&P 500 real returns have averaged ~7% annually since 1926, rewarding investors who stayed the course through every crash, recession, and panic.
+  </p>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">S&P 500 — Historical Real Returns by Decade</div>
+    </div>
+    <svg id="historicalChart" class="historical-chart"></svg>
+  </div>
+
+  <div class="era-list">
+    <div class="era-item">
+      <span class="era-period">1990–2000</span>
+      <span class="era-event">Tech Boom — bull market despite 1990 recession</span>
+      <span class="era-return" style="color:var(--accent3)">+14.2% real avg.</span>
+    </div>
+    <div class="era-item">
+      <span class="era-period">2000–2010</span>
+      <span class="era-event">Dot-com crash + 2008 GFC — "The Lost Decade"</span>
+      <span class="era-return" style="color:var(--red)">-0.9% real avg.</span>
+    </div>
+    <div class="era-item">
+      <span class="era-period">2010–2020</span>
+      <span class="era-event">Post-crisis recovery through COVID shock</span>
+      <span class="era-return" style="color:var(--accent3)">+11.2% real avg.</span>
+    </div>
+    <div class="era-item">
+      <span class="era-period">1970–1980</span>
+      <span class="era-event">Stagflation era — high inflation, volatile markets</span>
+      <span class="era-return" style="color:var(--red)">-1.4% real avg.</span>
+    </div>
+    <div class="era-item">
+      <span class="era-period">1980–1990</span>
+      <span class="era-event">Reagan bull market, S&L crisis</span>
+      <span class="era-return" style="color:var(--accent3)">+10.4% real avg.</span>
+    </div>
+    <div class="era-item" style="border-left-color:var(--accent)">
+      <span class="era-period">1926–2024</span>
+      <span class="era-event" style="color:var(--text)"><strong>Long-run average — all cycles included</strong></span>
+      <span class="era-return" style="color:var(--accent); font-size:1rem">~7.0% real</span>
+    </div>
+  </div>
+
+  <div class="quote-block fade-in">
+    <div class="quote-text">"The stock market is a device for transferring money from the impatient to the patient."</div>
+    <div class="quote-attr">— Warren Buffett</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OPTIONS / BRIDGE TO WEALTH -->
+<section class="section fade-in">
+  <div class="section-label">04 — Financial Optionality</div>
+  <h2>The <em>Bridge</em> to Leverage</h2>
+  <p class="section-intro">
+    Capital accumulation is not the end goal — it's the key. Once Maya's portfolio crosses key thresholds, it unlocks access to wealth-building vehicles that were previously inaccessible without inherited capital.
+  </p>
+
+  <div class="options-grid">
+    <div class="option-card">
+      <div class="option-icon">🏠</div>
+      <div class="option-name">Investment Property Down Payment</div>
+      <div class="option-threshold">Unlocks at Year 15 (~$35k)</div>
+      <div class="option-desc">
+        A $35k down payment on a $175k rental property (20%) in a secondary market generates monthly cash flow and appreciating equity — a second income stream built entirely from the pivot.
+      </div>
+      <div class="option-return">Est. rental yield: 6–8% / yr · Appreciation: 3–4% / yr</div>
+    </div>
+
+    <div class="option-card">
+      <div class="option-icon">🛡️</div>
+      <div class="option-name">Indexed Universal Life (IUL) Seed</div>
+      <div class="option-threshold">Unlocks at Year 5 (~$8k)</div>
+      <div class="option-desc">
+        An IUL policy funded with lump-sum seed capital creates a tax-advantaged death benefit and cash value tied to index performance — the rich person's tool, now accessible to Maya through discipline.
+      </div>
+      <div class="option-return">Cash value growth: 5–10% (floor protection) · Tax-free withdrawals in retirement</div>
+    </div>
+
+    <div class="option-card">
+      <div class="option-icon">🏢</div>
+      <div class="option-name">Business Line of Credit Collateral</div>
+      <div class="option-threshold">Unlocks at Year 20 (~$55k)</div>
+      <div class="option-desc">
+        A brokerage account with $55k+ can serve as collateral for a SBLOC (Securities-Backed Line of Credit), giving Maya access to $30–45k in low-interest capital to launch a business without liquidating her position.
+      </div>
+      <div class="option-return">SBLOC rate: Prime + 1–2% · No liquidation required</div>
+    </div>
+
+    <div class="option-card">
+      <div class="option-icon">🎓</div>
+      <div class="option-name">529 College Fund / Generational Transfer</div>
+      <div class="option-threshold">Unlocks at Any Milestone</div>
+      <div class="option-desc">
+        At any threshold, Maya can redirect contributions into a 529 plan for a child or redirect gains into a custodial brokerage account — seeding the next generation's financial foundation from scratch.
+      </div>
+      <div class="option-return">529 avg. growth: 6–8% · Federal tax-free for qualified education</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SYSTEMIC / WEALTH GAP -->
+<section class="section fade-in">
+  <div class="section-label">05 — Systemic Context</div>
+  <h2>Breaking the <em>Cycle</em></h2>
+  <p class="section-intro">
+    The wealth gap in America is structural — but compound interest doesn't check your zip code or credit score. For households without inherited capital, disciplined micro-investment is one of the most accessible wealth-building tools available.
+  </p>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">Median Wealth: Investor vs. Non-Investor Trajectory (Starting at $0)</div>
+    </div>
+    <svg id="gapChart" class="gap-chart"></svg>
+  </div>
+
+  <div class="quote-block fade-in">
+    <div class="quote-text">"Compound interest is the eighth wonder of the world. He who understands it, earns it. He who doesn't, pays it."</div>
+    <div class="quote-attr">— Attributed to Albert Einstein</div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:2rem;" class="fade-in">
+    <div style="padding:1.5rem; background:var(--card); border:1px solid var(--border);">
+      <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text3); margin-bottom:0.5rem;">Wealth Gap Reality</div>
+      <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--red);">$171k</div>
+      <div style="font-size:0.82rem; color:var(--text2); margin-top:0.25rem;">Median white household wealth vs. $20,700 for Black households (2022, Federal Reserve)</div>
+    </div>
+    <div style="padding:1.5rem; background:var(--card); border:1px solid var(--border);">
+      <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text3); margin-bottom:0.5rem;">Investment Ownership Gap</div>
+      <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--accent2);">61% vs 34%</div>
+      <div style="font-size:0.82rem; color:var(--text2); margin-top:0.25rem;">White households owning stocks vs. Black households (2023, Gallup)</div>
+    </div>
+    <div style="padding:1.5rem; background:var(--card); border:1px solid var(--border);">
+      <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text3); margin-bottom:0.5rem;">The Pivot's Impact</div>
+      <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--accent3);">+109%</div>
+      <div style="font-size:0.82rem; color:var(--text2); margin-top:0.25rem;">30-year gains above total contributions at 7% return — the power that compound interest gives to patient investors at any income level</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-note">
+    <strong>Data Sources & Assumptions</strong><br><br>
+    S&P 500 historical real returns: Robert Shiller (Yale) long-run dataset, 1926–2024.<br>
+    7% real return = approximate 100-year inflation-adjusted average.<br>
+    Wealth gap data: Federal Reserve 2022 Survey of Consumer Finances.<br>
+    Investment ownership: Gallup Economy & Personal Finance Survey 2023.<br>
+    Maya Chen is a fictional persona. All projections assume weekly contributions of $21, no withdrawals, and consistent index fund allocation. Past returns do not guarantee future performance.
+  </div>
+  <div class="footer-note">
+    <strong>Project Notes</strong><br><br>
+    Created for a data visualization course final project exploring micro-investment behavioral finance.<br><br>
+    The thesis: "strategic redirection" — not frugality — of $3/day unlocks financial optionality for young adults (ages 18–33) without inherited capital. Visualizations built with D3.js v7.
+  </div>
+</footer>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────
+const WEEKLY = 21;
+const ANNUAL = WEEKLY * 52; // $1,092
+
+function buildGrowthData(rate, years = 30) {
+  const data = [];
+  let portfolio = 0;
+  let contributed = 0;
+  for (let y = 0; y <= years; y++) {
+    data.push({ year: y, portfolio: Math.round(portfolio), contributed: Math.round(contributed), gains: Math.round(portfolio - contributed) });
+    portfolio = (portfolio + ANNUAL) * (1 + rate);
+    contributed += ANNUAL;
+  }
+  return data;
+}
+
+let currentRate = 0.07;
+let growthData = buildGrowthData(currentRate);
+
+// ─── MAIN CHART ───────────────────────────────────────────────────
+function drawMainChart(data) {
+  const el = document.getElementById('mainChart');
+  const parent = el.parentElement;
+  const W = parent.clientWidth - 64;
+  const H = 420;
+  const margin = { top: 20, right: 40, bottom: 40, left: 80 };
+  const w = W - margin.left - margin.right;
+  const h = H - margin.top - margin.bottom;
+
+  el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  el.setAttribute('width', W);
+  el.setAttribute('height', H);
+  el.innerHTML = '';
+
+  const svg = d3.select(el);
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleLinear().domain([0, 30]).range([0, w]);
+  const y = d3.scaleLinear().domain([0, d3.max(data, d => d.portfolio) * 1.1]).range([h, 0]);
+
+  const fmt = d => `$${(d/1000).toFixed(0)}k`;
+
+  // Grid lines
+  g.append('g').attr('class', 'grid')
+    .call(d3.axisLeft(y).ticks(6).tickFormat('').tickSize(-w))
+    .selectAll('line').style('stroke', '#2a2a3d').style('stroke-dasharray', '3,3');
+  g.select('.grid .domain').remove();
+
+  // Area - gains
+  const areaGains = d3.area().x(d => x(d.year)).y0(d => y(d.contributed)).y1(d => y(d.portfolio)).curve(d3.curveCatmullRom);
+  g.append('path').datum(data).attr('fill', 'rgba(240,192,64,0.12)').attr('d', areaGains);
+
+  // Area - contributed
+  const areaContrib = d3.area().x(d => x(d.year)).y0(h).y1(d => y(d.contributed)).curve(d3.curveCatmullRom);
+  g.append('path').datum(data).attr('fill', 'rgba(90,90,112,0.3)').attr('d', areaContrib);
+
+  // Lines
+  const linePortfolio = d3.line().x(d => x(d.year)).y(d => y(d.portfolio)).curve(d3.curveCatmullRom);
+  const lineContrib = d3.line().x(d => x(d.year)).y(d => y(d.contributed)).curve(d3.curveCatmullRom);
+
+  // Contributed line
+  g.append('path').datum(data).attr('fill', 'none').attr('stroke', '#5a5a70').attr('stroke-width', 1.5).attr('stroke-dasharray', '5,4').attr('d', lineContrib);
+
+  // Portfolio line (animated)
+  const pathPortfolio = g.append('path').datum(data).attr('fill', 'none').attr('stroke', '#50d8a0').attr('stroke-width', 2.5).attr('d', linePortfolio);
+  const totalLength = pathPortfolio.node().getTotalLength();
+  pathPortfolio.attr('stroke-dasharray', totalLength).attr('stroke-dashoffset', totalLength)
+    .transition().duration(1800).ease(d3.easeCubicOut).attr('stroke-dashoffset', 0);
+
+  // Milestone dots
+  [10, 20, 30].forEach(yr => {
+    const d = data[yr];
+    g.append('circle').attr('cx', x(yr)).attr('cy', y(d.portfolio)).attr('r', 5)
+      .attr('fill', '#50d8a0').attr('stroke', '#0a0a0f').attr('stroke-width', 2)
+      .style('opacity', 0).transition().delay(1800).style('opacity', 1);
+    g.append('text').attr('x', x(yr)).attr('y', y(d.portfolio) - 14)
+      .attr('text-anchor', 'middle').attr('font-family', "'DM Mono', monospace")
+      .attr('font-size', 10).attr('fill', '#50d8a0').text(fmt(d.portfolio))
+      .style('opacity', 0).transition().delay(1800).style('opacity', 1);
+  });
+
+  // Axes
+  g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(x).ticks(10).tickFormat(d => `Yr ${d}`))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+  g.select('.domain').style('stroke', '#2a2a3d');
+  g.selectAll('.tick line').style('stroke', '#2a2a3d');
+
+  g.append('g').call(d3.axisLeft(y).ticks(6).tickFormat(fmt))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+
+  // Hover overlay
+  const tooltip = document.getElementById('tooltip');
+  const overlay = g.append('rect').attr('width', w).attr('height', h).attr('fill', 'none').attr('pointer-events', 'all');
+
+  const vline = g.append('line').attr('y1', 0).attr('y2', h).attr('stroke', 'rgba(240,192,64,0.3)').attr('stroke-width', 1).style('display', 'none');
+
+  overlay.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event);
+    const yr = Math.round(x.invert(mx));
+    if (yr < 0 || yr > 30) return;
+    const d = data[yr];
+    vline.style('display', null).attr('x1', x(yr)).attr('x2', x(yr));
+    tooltip.style.opacity = '1';
+    tooltip.style.left = (margin.left + x(yr) + 12) + 'px';
+    tooltip.style.top = (margin.top + y(d.portfolio) - 10) + 'px';
+    tooltip.innerHTML = `
+      <div class="tooltip-year">Year ${yr} — Age ${22 + yr}</div>
+      <div class="tooltip-row"><span class="tooltip-label">Portfolio</span><span class="tooltip-val" style="color:var(--accent3)">$${d.portfolio.toLocaleString()}</span></div>
+      <div class="tooltip-row"><span class="tooltip-label">Contributed</span><span class="tooltip-val">$${d.contributed.toLocaleString()}</span></div>
+      <div class="tooltip-row"><span class="tooltip-label">Gains</span><span class="tooltip-val" style="color:var(--accent)">$${d.gains.toLocaleString()}</span></div>
+    `;
+  }).on('mouseleave', () => {
+    tooltip.style.opacity = '0';
+    vline.style('display', 'none');
+  });
+
+  // Update milestone cards
+  const fmt2 = v => '$' + v.toLocaleString();
+  document.getElementById('v10').textContent = fmt2(data[10].portfolio);
+  document.getElementById('g10').textContent = `+$${data[10].gains.toLocaleString()} in gains`;
+  document.getElementById('v20').textContent = fmt2(data[20].portfolio);
+  document.getElementById('g20').textContent = `+$${data[20].gains.toLocaleString()} in gains`;
+  document.getElementById('v30').textContent = fmt2(data[30].portfolio);
+  document.getElementById('g30').textContent = `+$${data[30].gains.toLocaleString()} in gains`;
+  document.getElementById('heroFinal').textContent = fmt2(data[30].portfolio);
+}
+
+function setRate(rate, btn) {
+  currentRate = rate;
+  growthData = buildGrowthData(rate);
+  drawMainChart(growthData);
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── HISTORICAL CHART ─────────────────────────────────────────────
+function drawHistoricalChart() {
+  const decades = [
+    { period: '1930s', return: -1.1 },
+    { period: '1940s', return: 8.3 },
+    { period: '1950s', return: 16.7 },
+    { period: '1960s', return: 5.2 },
+    { period: '1970s', return: -1.4 },
+    { period: '1980s', return: 10.4 },
+    { period: '1990s', return: 14.2 },
+    { period: '2000s', return: -0.9 },
+    { period: '2010s', return: 11.2 },
+    { period: '2020s', return: 8.6 },
+  ];
+
+  const el = document.getElementById('historicalChart');
+  const parent = el.parentElement;
+  const W = parent.clientWidth - 64;
+  const H = 340;
+  const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+  const w = W - margin.left - margin.right;
+  const h = H - margin.top - margin.bottom;
+
+  el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  el.setAttribute('width', W);
+  el.setAttribute('height', H);
+  el.innerHTML = '';
+
+  const svg = d3.select(el);
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand().domain(decades.map(d => d.period)).range([0, w]).padding(0.3);
+  const y = d3.scaleLinear().domain([-5, 20]).range([h, 0]);
+
+  g.append('g').attr('class', 'grid')
+    .call(d3.axisLeft(y).ticks(6).tickFormat('').tickSize(-w))
+    .selectAll('line').style('stroke', '#2a2a3d').style('stroke-dasharray', '3,3');
+  g.select('.grid .domain').remove();
+
+  // Zero line
+  g.append('line').attr('x1', 0).attr('x2', w).attr('y1', y(0)).attr('y2', y(0))
+    .attr('stroke', '#5a5a70').attr('stroke-width', 1).attr('stroke-dasharray', '4,4');
+
+  // Average line
+  g.append('line').attr('x1', 0).attr('x2', w).attr('y1', y(7)).attr('y2', y(7))
+    .attr('stroke', 'rgba(240,192,64,0.5)').attr('stroke-width', 1.5).attr('stroke-dasharray', '6,3');
+  g.append('text').attr('x', w + 4).attr('y', y(7) + 4)
+    .attr('font-family', "'DM Mono', monospace").attr('font-size', 9).attr('fill', 'rgba(240,192,64,0.7)').text('7% avg');
+
+  // Bars
+  g.selectAll('.bar').data(decades).enter().append('rect')
+    .attr('x', d => x(d.period))
+    .attr('width', x.bandwidth())
+    .attr('y', d => d.return >= 0 ? y(d.return) : y(0))
+    .attr('height', 0)
+    .attr('fill', d => d.return >= 0 ? '#50d8a0' : '#e05060')
+    .attr('opacity', 0.8)
+    .transition().duration(1200).delay((_, i) => i * 80)
+    .attr('height', d => Math.abs(y(d.return) - y(0)));
+
+  // Labels
+  g.selectAll('.bar-label').data(decades).enter().append('text')
+    .attr('x', d => x(d.period) + x.bandwidth() / 2)
+    .attr('y', d => d.return >= 0 ? y(d.return) - 4 : y(0) + Math.abs(y(d.return) - y(0)) + 14)
+    .attr('text-anchor', 'middle')
+    .attr('font-family', "'DM Mono', monospace").attr('font-size', 9)
+    .attr('fill', d => d.return >= 0 ? '#50d8a0' : '#e05060')
+    .text(d => `${d.return > 0 ? '+' : ''}${d.return}%`)
+    .style('opacity', 0).transition().delay(1200).style('opacity', 1);
+
+  g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(x))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+  g.append('g').call(d3.axisLeft(y).ticks(6).tickFormat(d => d + '%'))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+  g.selectAll('.domain').style('stroke', '#2a2a3d');
+  g.selectAll('.tick line').style('stroke', '#2a2a3d');
+}
+
+// ─── GAP CHART ────────────────────────────────────────────────────
+function drawGapChart() {
+  const years = d3.range(0, 31);
+  const investor = years.map(y => ({ year: y, val: buildGrowthData(0.07, 30)[y].portfolio }));
+  const noInvest = years.map(y => ({ year: y, val: y * ANNUAL }));
+  const noSave = years.map(y => ({ year: y, val: 0 }));
+
+  const el = document.getElementById('gapChart');
+  const parent = el.parentElement;
+  const W = parent.clientWidth - 64;
+  const H = 320;
+  const margin = { top: 20, right: 100, bottom: 40, left: 80 };
+  const w = W - margin.left - margin.right;
+  const h = H - margin.top - margin.bottom;
+
+  el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  el.setAttribute('width', W);
+  el.setAttribute('height', H);
+  el.innerHTML = '';
+
+  const svg = d3.select(el);
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleLinear().domain([0, 30]).range([0, w]);
+  const y = d3.scaleLinear().domain([0, 130000]).range([h, 0]);
+  const fmt = d => `$${(d/1000).toFixed(0)}k`;
+
+  g.append('g').attr('class', 'grid')
+    .call(d3.axisLeft(y).ticks(5).tickFormat('').tickSize(-w))
+    .selectAll('line').style('stroke', '#2a2a3d').style('stroke-dasharray', '3,3');
+  g.select('.grid .domain').remove();
+
+  // No-save flat
+  const pathNoSave = g.append('line').attr('x1', 0).attr('x2', w).attr('y1', y(0)).attr('y2', y(0))
+    .attr('stroke', '#e05060').attr('stroke-width', 1.5).attr('stroke-dasharray', '4,4');
+
+  // Contributed line
+  const lineC = d3.line().x(d => x(d.year)).y(d => y(d.val));
+  g.append('path').datum(noInvest).attr('fill', 'none').attr('stroke', '#5a5a70').attr('stroke-width', 1.5).attr('stroke-dasharray', '5,4').attr('d', lineC);
+
+  // Investor line
+  const lineI = d3.line().x(d => x(d.year)).y(d => y(d.val)).curve(d3.curveCatmullRom);
+  const iPath = g.append('path').datum(investor).attr('fill', 'none').attr('stroke', '#50d8a0').attr('stroke-width', 2.5).attr('d', lineI);
+  const iLen = iPath.node().getTotalLength();
+  iPath.attr('stroke-dasharray', iLen).attr('stroke-dashoffset', iLen)
+    .transition().duration(2000).ease(d3.easeCubicOut).attr('stroke-dashoffset', 0);
+
+  // Labels
+  const labelData = [
+    { label: 'Invests $21/wk', color: '#50d8a0', val: investor[30].val },
+    { label: 'Saves only (no return)', color: '#5a5a70', val: noInvest[30].val },
+    { label: 'No savings', color: '#e05060', val: 0 },
+  ];
+  labelData.forEach(ld => {
+    g.append('text').attr('x', w + 6).attr('y', y(ld.val) + 4)
+      .attr('font-family', "'DM Mono', monospace").attr('font-size', 9).attr('fill', ld.color).text(ld.label);
+  });
+
+  g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(x).ticks(10).tickFormat(d => `Yr ${d}`))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+  g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(fmt))
+    .selectAll('text').style('fill', '#5a5a70').style('font-family', "'DM Mono', monospace").style('font-size', '10px');
+  g.selectAll('.domain').style('stroke', '#2a2a3d');
+  g.selectAll('.tick line').style('stroke', '#2a2a3d');
+}
+
+// ─── INTERSECTION OBSERVER ────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in, .milestone-card').forEach(el => observer.observe(el));
+
+// ─── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  drawMainChart(growthData);
+  drawHistoricalChart();
+  drawGapChart();
+});
+
+window.addEventListener('resize', () => {
+  drawMainChart(buildGrowthData(currentRate));
+  drawHistoricalChart();
+  drawGapChart();
+});
+</script>
+</body>
+</html>
